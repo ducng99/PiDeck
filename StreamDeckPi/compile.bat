@@ -1,0 +1,1 @@
+csc *.cs -r:System.Windows.Forms.dll -r:System.Drawing.dll -r:Newtonsoft.Json.dll /out:PiDeck.exe
