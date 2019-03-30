@@ -1,4 +1,5 @@
-﻿using OBSWebsocketDotNet;
+﻿using Newtonsoft.Json.Linq;
+using OBSWebsocketDotNet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,12 +31,12 @@ namespace StreamDeck
             }
             else if (requestArg.Contains("[SetScene]"))
             {
-                //if (!obs.StudioModeEnabled())
-                    //obs.SetStudioMode(true);
+                if (!obs.StudioModeEnabled())
+                    obs.SetStudioMode(true);
 
-                //obs.SetCurrentScene(requestArg.RemoveString("[OBS][SetScene]"));
-                obs.TransitionToProgram(3000, requestArg.RemoveString("[OBS][SetScene]"));
-                //obs.SetStudioMode(false);
+                obs.SetCurrentScene(requestArg.RemoveString("[OBS][SetScene]"));
+                Thread.Sleep(3000);
+                obs.SetStudioMode(false);
             }
         }
 
