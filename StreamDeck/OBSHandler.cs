@@ -17,26 +17,47 @@ namespace StreamDeck
             public string password;
         }
 
-        public static OBSWebsocket obs = new OBSWebsocket();
+        public static OBSWebsocket obs;
+        public static int port;
+        public static string password;
+
+        public OBSHandler(OBSSettings settings)
+        {
+            port = settings.port;
+            password = settings.password;
+
+            obs = new OBSWebsocket();
+            obs.Disconnected += Obs_Disconnected;
+        }
+
+        private void Obs_Disconnected(object sender, EventArgs e)
+        {
+            try
+            {
+                Task.Run(() => InitConnect());
+            }
+            catch (TaskCanceledException)
+            {
+                //Yes cancel it bitch
+            }
+        }
 
         public static void ReadRequest(string requestArg)
         {
-            if (requestArg.Contains("[StartStopStreaming]"))
+            if (obs.IsConnected)
             {
-                obs.ToggleStreaming();
-            }
-            else if (requestArg.Contains("[StudioModeToggle]"))
-            {
-                obs.ToggleStudioMode();
-            }
-            else if (requestArg.Contains("[SetScene]"))
-            {
-                if (!obs.StudioModeEnabled())
-                    obs.SetStudioMode(true);
-
-                obs.SetCurrentScene(requestArg.RemoveString("[OBS][SetScene]"));
-                Thread.Sleep(3000);
-                obs.SetStudioMode(false);
+                if (requestArg.Contains("[StartStopStreaming]"))
+                {
+                    obs.ToggleStreaming();
+                }
+                else if (requestArg.Contains("[StudioModeToggle]"))
+                {
+                    obs.ToggleStudioMode();
+                }
+                else if (requestArg.Contains("[SetScene]"))
+                {
+                    obs.SetCurrentScene(requestArg.RemoveString("[OBS][SetScene]"));
+                }
             }
         }
 
@@ -55,23 +76,10 @@ namespace StreamDeck
             }
         }
 
-        public async static void InitConnect(int port, string password)
+        public static void InitConnect()
         {
-            do
-            {
-                var source = new CancellationTokenSource(); //original code
-                source.CancelAfter(TimeSpan.FromSeconds(5)); //original code
-                var completionSource = new TaskCompletionSource<object>(); //New code
-                source.Token.Register(() => completionSource.TrySetCanceled()); //New code
-
-                Task task = Task.Run(() =>
-                {
-                    obs.Connect("ws://" + WebServer.getIP() + ":" + port, (password ?? null));
-                }, source.Token);
-
-                await Task.WhenAny(task, completionSource.Task);
-            }
-            while (!obs.IsConnected);
+            obs.WSTimeout = TimeSpan.FromSeconds(5);
+            obs.Connect("ws://" + WebServer.getIP() + ":" + port, (password ?? null));
         }
     }
 }

@@ -102,8 +102,16 @@ namespace StreamDeck
             server.Run();
 
             OBSHandler.OBSSettings obsSettings = FileHandler.LoadObsSettings();
+            OBSHandler obs = new OBSHandler(obsSettings);
 
-            Task.Run(() => { OBSHandler.InitConnect(obsSettings.port, obsSettings.password); });
+            try
+            {
+                Task.Run(() => OBSHandler.InitConnect());
+            }
+            catch (TaskCanceledException)
+            {
+                //Yes cancel it bitch
+            }
 
             FileHandler.readData(out parentPage);
 
